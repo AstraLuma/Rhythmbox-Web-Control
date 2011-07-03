@@ -1,0 +1,9 @@
+[RB Plugin]
+Loader=python
+Module=webctl
+IAge=1
+Name=Server for JSON RPC
+Description=Allows control of Rhythmbox over JSON
+Authors=Jamie Bliss <astronouth7303@gmail.com>
+Copyright=Copyright © 2011 James Bliss
+
