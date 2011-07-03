@@ -81,6 +81,7 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, object):
 	
 	POST_PARSERS = {
 		'application/x-www-form-urlencoded': urlparse.parse_qs,
+		# TODO: Add the multipart used in file uploads
 		JSON_MIMETYPE: json.loads,
 		}
 	
@@ -99,6 +100,8 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, object):
 		if path.startswith('/'):
 			path = path[1:]
 		path = path.split('/')
+		
+		#FIXME: Do this by repeated getattr() calls
 		modname = '.'.join(['handlers']+path[:-1])
 		objname = path[-1]
 		try:
@@ -107,6 +110,7 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, object):
 		except (ImportError, AttributeError):
 			# Return a 404, couldn't find the handler
 			pass
+		#END FIXME
 		
 		if isinstance(obj, type):
 			obj = obj()

@@ -1,0 +1,5 @@
+This is a basic web-based remote control for Rhythmbox. Doesn't do anything like auth, uses a config file for settings, etc.
+
+It uses a webserver that works with the GTK event loop instead of multithreading. This component (inside of rhythmbox/server.py) is probably useful in other projects.
+
+Additionally, there's a browser plugin in the chrome folder. Again, not nice, but works.
