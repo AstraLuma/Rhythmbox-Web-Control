@@ -53,6 +53,7 @@ def getobj_path(root, path):
     start from. Will attempt to descend into submodules even if they're not 
     currently imported.
     """
+    obj = root
     for i, aname in enumerate(path):
         try:
             obj = getattr(obj, aname)
@@ -99,8 +100,8 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, object):
 		self.send_response(code, message)
 		self.send_header("Content-Type", JSON_MIMETYPE)
 		self.send_header('Connection', 'close')
-		if _hasbody(code):
 			self.send_header('Content-Length', len(content)) # Still send with HEAD
+		if _hasbody(code):
 		self.end_headers()
 		if self.command != 'HEAD' and _hasbody(code):
 			self.wfile.write(content)
@@ -214,4 +215,3 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, object):
             self.send_error(*err.pargs, **err.kwargs)
     
 	do_HEAD = do_GET = do_POST = _error_dispatch_wrapper
-
