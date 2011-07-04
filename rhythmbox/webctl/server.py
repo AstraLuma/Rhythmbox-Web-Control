@@ -41,6 +41,33 @@ class Server(BaseHTTPServer.HTTPServer, object):
 		self._handle_request_noblock() # We can skip their select() call, since we already know there's data to read
 		return True # Continue reading data
 
+class HttpError(Exception):
+    def __init__(self, *pargs, **kwargs):
+        super(HttpError, self).__init__()
+        self.pargs = pargs
+        self.kwargs = kwargs
+
+def getobj_path(root, path):
+    """getobj_path(obj, list(str)) -> obj
+    Finds an object given a list of attributes to go through and a root to 
+    start from. Will attempt to descend into submodules even if they're not 
+    currently imported.
+    """
+    obj = root
+    for i, aname in enumerate(path):
+        try:
+            obj = getattr(obj, aname)
+        except AttributeError:
+            if isinstance(obj, types.ModuleType):
+                try:
+                    obj = __import__(aname, globals=vars(obj)) # Uses the old logic to do a child import
+                except ImportError:
+                    raise AttributeError
+            else:
+                raise
+    return obj
+
+
 class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, object):
 	# Configure the request handler
 	server_version = 'Rhythmbox/%s WebCtl/0.1' % (rb.__version__)
@@ -73,8 +100,8 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, object):
 		self.send_response(code, message)
 		self.send_header("Content-Type", JSON_MIMETYPE)
 		self.send_header('Connection', 'close')
-		if _hasbody(code):
 			self.send_header('Content-Length', len(content)) # Still send with HEAD
+		if _hasbody(code):
 		self.end_headers()
 		if self.command != 'HEAD' and _hasbody(code):
 			self.wfile.write(content)
@@ -101,17 +128,12 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, object):
 			path = path[1:]
 		path = path.split('/')
 		
-		#FIXME: Do this by repeated getattr() calls
-		modname = '.'.join(['handlers']+path[:-1])
-		objname = path[-1]
-		try:
-			module = __import__(modname, globals(), [objname], 1)
-			obj = getattr(module, objname)
-		except (ImportError, AttributeError):
-			# Return a 404, couldn't find the handler
-			pass
-		#END FIXME
-		
+        obj = __import__('handlers', globals=globals(), fromlist=['__name__'], level=1) # Basically, `import .handlers`
+        try:
+    		obj = getobj_path(obj, path)
+        except AttributeError:
+            raise HttpError(404)
+        
 		if isinstance(obj, type):
 			obj = obj()
 		
@@ -123,7 +145,7 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, object):
 			return getattr(obj, cmd)
 		except AttributeError:
 			# Return a 405, handler doesn't do this method
-			pass
+			raise HttpError(405)
 	
 	def _dispatch(self):
 		headers = self._parse_headers()
@@ -133,7 +155,7 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, object):
 			payload = None
 		
 		# Make the call
-		h = self._find_handler()(self, urlparse.urlparse(self.path, 'http'), self.headers, payload)
+		h = self._find_handler()(self, self.server.env, urlparse.urlparse(self.path, 'http'), self.headers, payload)
 		
 		# Make the response
 		try:
@@ -186,5 +208,10 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, object):
 			if self.command != 'HEAD' and _hasbody(code):
 				self.wfile.write(content)
 	
-	do_HEAD = do_GET = do_POST = _dispatch
-
+    def _error_dispatch_wrapper(self, *p, **kw):
+        try:
+            self._dispatch(*p, **kw)
+        except HttpError, err:
+            self.send_error(*err.pargs, **err.kwargs)
+    
+	do_HEAD = do_GET = do_POST = _error_dispatch_wrapper
