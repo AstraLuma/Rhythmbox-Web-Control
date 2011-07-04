@@ -9,7 +9,7 @@ class example(object):
 	"""
 	Handler for path /example
 	"""
-	def GET(self, env, request, method, url, headers, payload):
+	def GET(self, request, env, url, headers, payload):
 		# Send code
 		yield 200 # This is the default, so this is optional
 	

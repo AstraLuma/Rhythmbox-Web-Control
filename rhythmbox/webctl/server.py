@@ -5,8 +5,7 @@ A webserver for serving JSON RPC calls, based on gobject.
 """
 from __future__ import division, absolute_import, with_statement
 import gobject, glib
-import BaseHTTPServer, json, urlparse
-import rb # Needed for some metadata
+import BaseHTTPServer, json, urlparse, types
 __all__ = 'Server',
 
 JSON_MIMETYPE = 'application/json'
@@ -18,7 +17,7 @@ _hasbody = lambda c: c >= 200 and c not in (204, 304)
 class Server(BaseHTTPServer.HTTPServer, object):
 # Server management activities
 	def __init__(self, **env):
-		super(Server, self).__init__(self.env['listen'], RequestHandler, bind_and_activate=False)
+		super(Server, self).__init__(env['listen'], RequestHandler, bind_and_activate=False)
 		self.env = dict(env)
 	
 	def __enter__(self):
@@ -37,7 +36,7 @@ class Server(BaseHTTPServer.HTTPServer, object):
 		# Remove references to environment objects (namely, Rhythmbox shell)
 		del self.env
 	
-	def _data_in(self, source, condition)
+	def _data_in(self, source, condition):
 		self._handle_request_noblock() # We can skip their select() call, since we already know there's data to read
 		return True # Continue reading data
 
@@ -70,7 +69,13 @@ def getobj_path(root, path):
 
 class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, object):
 	# Configure the request handler
-	server_version = 'Rhythmbox/%s WebCtl/0.1' % (rb.__version__)
+	try:
+			import rb
+	except ImportError:
+			server_version = ''
+	else:
+			server_version = 'Rhythmbox/%s ' % (rb.__version__)
+	server_version += 'WebCtl/0.1'
 	protocol_version = 'HTTP/1.1'
 	
 	def send_error(self, code, message=None, explain=None):
@@ -100,9 +105,9 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, object):
 		self.send_response(code, message)
 		self.send_header("Content-Type", JSON_MIMETYPE)
 		self.send_header('Connection', 'close')
-			self.send_header('Content-Length', len(content)) # Still send with HEAD
+   		self.send_header('Content-Length', len(content)) # Still send with HEAD
 		if _hasbody(code):
-		self.end_headers()
+				self.end_headers()
 		if self.command != 'HEAD' and _hasbody(code):
 			self.wfile.write(content)
 	
@@ -148,7 +153,6 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, object):
 			raise HttpError(405)
 	
 	def _dispatch(self):
-		headers = self._parse_headers()
 		if self.command == 'POST':
 			payload = self._parse_payload()
 		else:
@@ -185,9 +189,9 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, object):
 				else:
 					heads.append(d)
 			
-			hastype = any(n.lower() = 'content-type' for n,_ in heads)
+			hastype = any(n.lower() == 'content-type' for n,_ in heads)
 			
-			if isintance(content, basestring):
+			if isinstance(content, basestring):
 				if not hastype: heads += [('Content-Type', 'text/plain')]
 			else: #JSON!
 				content = json.dumps(content)

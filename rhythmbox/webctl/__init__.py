@@ -4,13 +4,15 @@
 Basic JSON webserver for Rhythmbox
 """
 from __future__ import division, absolute_import, with_statement
-import rb
 import gobject, gtk, gio
 from .server import Server
 
-__all__ = 'WebCtl',
+try:
+	from rb import Plugin
+except ImportError:
+	Plugin = object #Testing only
 
-class WebCtl(rb.Plugin):
+class WebCtl(Plugin):
 	def __init__(self):
 		super(WebCtl, self).__init__()
 	
