@@ -4,9 +4,40 @@
 		<script src="jquery-1.6.2.min.js"></script>
 		<script src="address.js"></script>
 		<script>
+var player = {
+	"previous": function () {
+		$.post(getrburl('/player/previous'));
+	},
+	"next": function () {
+		$.post(getrburl('/player/next'));
+	},
+	"pause": function () {
+		$.post(getrburl('/player/pause'));
+	},
+	"play": function () {
+		$.post(getrburl('/player/play'));
+	},
+	"playpause": function () {
+		$.post(getrburl('/player/playpause'));
+	},
+	"stop": function () {
+		$.post(getrburl('/player/stop'));
+	}
+/*	"playing": function () {
+		$.post(getrburl('/player/previous'));
+	}*/
+};
 		</script>
+		<style>
+body {
+	width: 200px;
+	text-align: center;
+}
+		</style>
 	</head>
 	<body>
-	
+		<button onclick="player.previous()"><img src="media-skip-backward.png"></button>
+		<button onclick="player.playpause()"><img src="media-playback-start.png"><img src="media-playback-pause.png"></button>
+		<button onclick="player.next()"><img src="media-skip-forward.png"></button>
 	</body>
 </html>
