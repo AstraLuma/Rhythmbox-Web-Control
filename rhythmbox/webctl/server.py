@@ -17,7 +17,7 @@ _hasbody = lambda c: c >= 200 and c not in (204, 304)
 class Server(BaseHTTPServer.HTTPServer, object):
 # Server management activities
 	def __init__(self, **env):
-		super(Server, self).__init__(env['listen'], RequestHandler, bind_and_activate=False)
+		super(Server, self).__init__(tuple(env['listen']), RequestHandler, bind_and_activate=False)
 		self.env = dict(env)
 	
 	def __enter__(self):
@@ -119,6 +119,7 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, object):
 	
 	def _parse_payload(self):
 		l = self.headers.get('Content-Length', '')
+		l = int(l)
 		data = self.rfile.read(l)
 		t = self.headers.gettype()
 		if t in self.POST_PARSERS:
