@@ -1,0 +1,22 @@
+{
+	"name": "Rhythmbox WebCtl",
+	"version": "0.1",
+	"description": "Remote for Rhythmbox",
+	"browser_action": {
+		"default_icon": "rhythmbox-22.png",
+		"default_popup": "popup.html"
+	},
+	"background_page": "background.html",
+	"icons": { 
+		"16": "rhythmbox-16.png",
+		"22": "rhythmbox-22.png",
+		"24": "rhythmbox-24.png",
+		"32": "rhythmbox-32.png",
+		"48": "rhythmbox-48.png",
+		"256": "rhythmbox-256.png"
+	},
+	"permissions": [
+		"<all_urls>",
+		"background"
+	]
+}

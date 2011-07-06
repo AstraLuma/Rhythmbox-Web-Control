@@ -1,0 +1,17 @@
+<script src="jquery-1.6.2.min.js"></script>
+<script src="address.js"></script>
+<script>
+chrome.browserAction.setBadgeText({"text": "..."});
+function checkAvailable() {
+	$.get(getrburl('/example'), function (data, textStatus, jqXHR) {
+		chrome.browserAction.setBadgeText({"text": ""});
+		
+	})
+	.error(function () {
+		chrome.browserAction.setBadgeBackgroundColor({"color": [255, 0, 0, 255]});
+		chrome.browserAction.setBadgeText({"text": "NO"});
+	});
+}
+setInterval(checkAvailable,60*1000);
+checkAvailable();
+</script>

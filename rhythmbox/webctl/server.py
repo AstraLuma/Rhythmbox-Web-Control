@@ -15,7 +15,7 @@ _hasbody = lambda c: c >= 200 and c not in (204, 304)
 # Note: The server libraries use old-style classes, the "object" subclassing is to fix that.
 
 class Server(BaseHTTPServer.HTTPServer, object):
-# Server management activities
+	timeout = 0.1
 	def __init__(self, **env):
 		super(Server, self).__init__(tuple(env['listen']), RequestHandler, bind_and_activate=False)
 		self.env = dict(env)
@@ -37,7 +37,7 @@ class Server(BaseHTTPServer.HTTPServer, object):
 		del self.env
 	
 	def _data_in(self, source, condition):
-		self._handle_request_noblock() # We can skip their select() call, since we already know there's data to read
+		self.handle_request() # We can skip their select() call, since we already know there's data to read
 		return True # Continue reading data
 
 class HttpError(Exception):
@@ -76,7 +76,7 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, object):
 	else:
 			server_version = 'Rhythmbox/%s ' % (rb.__version__)
 	server_version += 'WebCtl/0.1'
-	protocol_version = 'HTTP/1.1'
+	protocol_version = 'HTTP/1.0' # Using 1.1 means the keep-alive is available, possibly blocking
 	
 	def send_error(self, code, message=None, explain=None):
 		"""Send and log an error reply.
@@ -159,8 +159,9 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, object):
 		else:
 			payload = None
 		
+		self.log_message("Recieved: %r %r\n%r\n%r", self.command, self.path, dict(self.headers), payload)
 		# Make the call
-		h = self._find_handler()(self, self.server.env, urlparse.urlparse(self.path, 'http'), self.headers, payload)
+		h = self._find_handler()(self, self.server.env, urlparse.urlparse(self.path, 'http'), self.headers.headers, payload)
 		
 		# Make the response
 		try:
