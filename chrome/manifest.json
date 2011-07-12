@@ -16,7 +16,6 @@
 		"256": "rhythmbox-256.png"
 	},
 	"permissions": [
-		"<all_urls>",
-		"background"
+		"<all_urls>"
 	]
 }
