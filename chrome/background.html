@@ -1,17 +1,67 @@
 <script src="jquery-1.6.2.min.js"></script>
 <script src="address.js"></script>
 <script>
-chrome.browserAction.setBadgeText({"text": "..."});
-function checkAvailable() {
-	$.get(getrburl('/example'), function (data, textStatus, jqXHR) {
-		chrome.browserAction.setBadgeText({"text": ""});
-		
-	})
-	.error(function () {
+
+/**
+ * Styles the badge to reflect our current state.
+ */
+function setState(state) {
+	if (state == 'working') {
+		chrome.browserAction.setBadgeText({"text": "..."});
+	} else if (state == 'disconnected') {
 		chrome.browserAction.setBadgeBackgroundColor({"color": [255, 0, 0, 255]});
 		chrome.browserAction.setBadgeText({"text": "NO"});
+	} else if (state == 'connected') {
+		chrome.browserAction.setBadgeText({"text": ""});
+	}
+}
+
+/**
+ * Do some tests to see if the extension can function (ie, can contact the 
+ * media player).
+ */
+function checkAvailable() {
+	if (navigator.onLine == false) { // Undefined will fall through
+		setState('disconnected');
+	}
+	$.get(getrburl('/example'), function (data, textStatus, jqXHR) {
+		setState('connected');
+	})
+	.error(function () {
+		setState('disconnected');
 	});
 }
-setInterval(checkAvailable,60*1000);
-checkAvailable();
+
+var intid = null;
+function startChecking() {
+	if (!intid) {
+		intid = setInterval(checkAvailable,60*1000);
+		checkAvailable();
+	}
+}
+
+function stopChecking() {
+	if (intid) {
+		clearInterval(intid);
+		intid = null;
+	}
+}
+
+setState('working');
+$(window)
+	.bind("online", function() {
+		setState('working');
+		startChecking();
+	})
+	.bind("offline", function() {
+		setState('disconnected');
+		stopChecking();
+	})
+	;
+
+if (navigator.onLine != false) {
+	startChecking();
+} else {
+	setState('disconnected');
+}
 </script>
